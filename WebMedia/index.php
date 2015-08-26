@@ -1,4 +1,6 @@
 <?
+$dbfile = "library.db";
+$db = new SQLite3($dbfile);
 $root = "/mnt/Oracle/Music/";
 if (array_key_exists("f", $_GET)) {
     if (strpos("/" . $_GET["f"] . "/", "/../") !== false) {
@@ -15,8 +17,6 @@ if (array_key_exists("f", $_GET)) {
     finfo_close($finfo);
     die(file_get_contents($path));
 }
-$paths = fopen("files.txt", "r");
-if (!$paths) die("Failed to open file list.");
 ?><!DOCTYPE html>
 <html>
     <head>
@@ -56,17 +56,12 @@ if (!$paths) die("Failed to open file list.");
         </div>
         <div id="list">
 <?
-while (($path = fgets($paths)) !== false) {
-    list($albumartist, $album, $filename) = explode("/", $path);
-    list($artists, $title) = explode(" - ", $filename, 2);
-    $title = explode(".", $title);
-    array_pop($title);
-    $title = implode(".", $title);
+$files =$db->query("SELECT path, track, title, artist, album, albumartist FROM songs");
+while ($file = $files->fetchArray()) {
 ?>
-            <div class="file" data-path="<?=htmlspecialchars(trim($path))?>"><strong><?=htmlspecialchars($title)?></strong> by <?=htmlspecialchars($artists)?> <small>[<?=htmlspecialchars($album)?> by <?=htmlspecialchars($albumartist)?>]</small></div>
+            <div class="file" data-path="<?=htmlspecialchars($file["path"])?>"><strong><?=htmlspecialchars($file["title"])?></strong> by <?=htmlspecialchars($file["artist"])?> <small>[<?=htmlspecialchars($file["album"])?> by <?=htmlspecialchars($file["albumartist"])?>]</small></div>
 <?
 }
-fclose($paths);
 ?>
         </div>
         <script src="lib/js/jquery.min.js"></script>
