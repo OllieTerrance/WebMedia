@@ -5,15 +5,21 @@ import re
 import sqlite3
 import sys
 
-dbfile = "library.db"
-root = "/mnt/Oracle/Music"
+if len(sys.argv) < 2:
+    sys.exit("Usage: {0} <root> [<db>]".format(sys.argv[0]))
+
+dbfile = sys.argv[2] if len(sys.argv) >= 3 else "library.db"
+root = sys.argv[1].rstrip("/")
 patt = re.compile("(?P<albumartist>.*?)/(?P<album>.*?)/((?P<track>[0-9]+)\. )?(?P<artist>.*?) - (?P<title>.*)\.[a-z]+", re.I)
 
 db = sqlite3.connect(dbfile)
 cur = db.cursor()
 cur.execute("DROP TABLE IF EXISTS songs")
-cur.execute("CREATE TABLE songs (path TEXT NOT NULL, track INTEGER, title TEXT, artist TEXT, album TEXT, albumartist TEXT)")
-print("Created database {0}.".format(dbfile))
+cur.execute("CREATE TABLE songs (path TEXT NOT NULL PRIMARY KEY, track INTEGER, title TEXT, artist TEXT, album TEXT, albumartist TEXT)")
+cur.execute("DROP TABLE IF EXISTS config")
+cur.execute("CREATE TABLE config (key TEXT NOT NULL PRIMARY KEY, value TEXT)")
+cur.execute("INSERT INTO config (key, value) VALUES ('root', ?)", (root,))
+print("Initialised database {0}.".format(dbfile))
 
 songfiles = []
 

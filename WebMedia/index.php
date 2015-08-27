@@ -1,7 +1,7 @@
 <?
-$dbfile = "library.db";
+$dbfile = getenv("DATA") . "library.db";
 $db = new SQLite3($dbfile);
-$root = "/mnt/Oracle/Music/";
+$root = $db->querySingle("SELECT value FROM config WHERE key = 'root'");
 if (array_key_exists("f", $_GET)) {
     if (strpos("/" . $_GET["f"] . "/", "/../") !== false) {
         http_response_code(401);
