@@ -7,7 +7,7 @@ if (array_key_exists("f", $_GET)) {
         http_response_code(401);
         die();
     }
-    $path = $root . $_GET["f"];
+    $path = $root . "/" . $_GET["f"];
     if (!is_readable($path)) {
         http_response_code(404);
         die();
@@ -37,15 +37,26 @@ if (array_key_exists("f", $_GET)) {
             }
             #list {
                 padding-top: 40px;
+                width: 100%;
+                border-spacing: 0;
             }
-            #list > .file {
+            #list .file td {
                 padding: 2px 5px 5px;
                 cursor: default;
             }
-            #list > .file:nth-child(odd) {
-                background-color: #ddd;
+            #list .file td:nth-child(1) {
+                text-align: right;
             }
-            #list > .file.playing {
+            #list .file td:nth-child(2) {
+                font-weight: bold;
+            }
+            #list .file td:nth-child(4), #list .file td:nth-child(5) {
+                font-size: small;
+            }
+            #list .file:nth-child(odd) {
+                background-color: #eee;
+            }
+            #list .file.playing {
                 background-color: #acf;
             }
         </style>
@@ -54,27 +65,33 @@ if (array_key_exists("f", $_GET)) {
         <div id="player">
             <audio controls></audio>
         </div>
-        <div id="list">
+        <table id="list">
 <?
 $files =$db->query("SELECT path, track, title, artist, album, albumartist FROM songs");
 while ($file = $files->fetchArray()) {
 ?>
-            <div class="file" data-path="<?=htmlspecialchars($file["path"])?>"><strong><?=htmlspecialchars($file["title"])?></strong> by <?=htmlspecialchars($file["artist"])?> <small>[<?=htmlspecialchars($file["album"])?> by <?=htmlspecialchars($file["albumartist"])?>]</small></div>
+            <tr class="file" data-name="<?=htmlspecialchars($file["artist"])?> - <?=htmlspecialchars($file["title"])?>" data-path="<?=htmlspecialchars($file["path"])?>">
+                <td><?=htmlspecialchars($file["track"])?></td>
+                <td><?=htmlspecialchars($file["title"])?></td>
+                <td><?=htmlspecialchars($file["artist"])?></td>
+                <td><?=htmlspecialchars($file["album"])?></td>
+                <td><?=htmlspecialchars($file["albumartist"])?></td>
+            </tr>
 <?
 }
 ?>
-        </div>
+        </table>
         <script src="lib/js/jquery.min.js"></script>
         <script>
             $("#player audio").on("canplay", function(e) {
                 this.play();
             });
-            $("#list > .file").click(function(e) {
+            $("#list .file").click(function(e) {
                 var player = $("#player audio")[0];
                 player.src = "?f=" + encodeURIComponent($(this).data("path"));
                 player.load();
-                document.title = "\u266a " + $(this).data("path");
-                $("#list > .file.playing").removeClass("playing");
+                document.title = "\u266a " + $(this).data("name") + " | Media";
+                $("#list .file.playing").removeClass("playing");
                 $(this).addClass("playing");
             });
         </script>
