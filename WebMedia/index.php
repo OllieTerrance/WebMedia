@@ -3,13 +3,15 @@ $dbfile = getenv("DATA") . "library.db";
 $db = new SQLite3($dbfile);
 $root = $db->querySingle("SELECT value FROM config WHERE key = 'root'");
 if (array_key_exists("f", $_GET)) {
-    if (strpos("/" . $_GET["f"] . "/", "/../") !== false) {
-        http_response_code(401);
+    $stmt = $db->prepare("SELECT EXISTS(SELECT 1 FROM songs WHERE path = ?)");
+    $stmt->bindValue(1, $_GET["f"], SQLITE3_TEXT);
+    if (!$stmt->execute()->fetchArray()[0]) {
+        http_response_code(404);
         die();
     }
     $path = $root . "/" . $_GET["f"];
     if (!is_readable($path)) {
-        http_response_code(404);
+        http_response_code(500);
         die();
     }
     $finfo = finfo_open();
@@ -67,7 +69,7 @@ if (array_key_exists("f", $_GET)) {
         </div>
         <table id="list">
 <?
-$files =$db->query("SELECT path, track, title, artist, album, albumartist FROM songs");
+$files =$db->query("SELECT path, track, title, artist, album, albumartist FROM songs ORDER BY albumartist ASC, album ASC, track ASC, title ASC");
 while ($file = $files->fetchArray()) {
 ?>
             <tr class="file" data-name="<?=htmlspecialchars($file["artist"])?> - <?=htmlspecialchars($file["title"])?>" data-path="<?=htmlspecialchars($file["path"])?>">
