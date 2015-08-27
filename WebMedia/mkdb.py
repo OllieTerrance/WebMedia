@@ -15,7 +15,7 @@ patt = re.compile("(?P<albumartist>.*?)/(?P<album>.*?)/((?P<track>[0-9]+)\. )?(?
 db = sqlite3.connect(dbfile)
 cur = db.cursor()
 cur.execute("DROP TABLE IF EXISTS songs")
-cur.execute("CREATE TABLE songs (path TEXT NOT NULL PRIMARY KEY, track INTEGER, title TEXT, artist TEXT, album TEXT, albumartist TEXT)")
+cur.execute("CREATE TABLE songs (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL UNIQUE, track INTEGER, title TEXT, artist TEXT, album TEXT, albumartist TEXT)")
 cur.execute("DROP TABLE IF EXISTS config")
 cur.execute("CREATE TABLE config (key TEXT NOT NULL PRIMARY KEY, value TEXT)")
 cur.execute("INSERT INTO config (key, value) VALUES ('root', ?)", (root,))

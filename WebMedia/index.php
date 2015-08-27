@@ -2,16 +2,17 @@
 $dbfile = getenv("DATA") . "library.db";
 $db = new SQLite3($dbfile);
 $root = $db->querySingle("SELECT value FROM config WHERE key = 'root'");
-if (array_key_exists("f", $_GET)) {
-    $stmt = $db->prepare("SELECT EXISTS(SELECT 1 FROM songs WHERE path = ?)");
-    $stmt->bindValue(1, $_GET["f"], SQLITE3_TEXT);
+if (array_key_exists("id", $_GET)) {
+    $id = $_GET["id"];
+    $stmt = $db->prepare("SELECT EXISTS(SELECT 1 FROM songs WHERE id = ?)");
+    $stmt->bindValue(1, $id, SQLITE3_INTEGER);
     if (!$stmt->execute()->fetchArray()[0]) {
         http_response_code(404);
         die();
     }
-    $path = $root . "/" . $_GET["f"];
+    $path = $root . "/" . $db->querySingle("SELECT path FROM songs WHERE id = $id");
     if (!is_readable($path)) {
-        http_response_code(500);
+        http_response_code(403);
         die();
     }
     $finfo = finfo_open();
@@ -26,6 +27,7 @@ if (array_key_exists("f", $_GET)) {
         <style>
             body {
                 margin: 0;
+                font-size: 0.9em;
             }
             #player {
                 position: fixed;
@@ -44,6 +46,7 @@ if (array_key_exists("f", $_GET)) {
             }
             #list .file td {
                 padding: 2px 5px 5px;
+                vertical-align: bottom;
                 cursor: default;
             }
             #list .file td:nth-child(1) {
@@ -53,7 +56,7 @@ if (array_key_exists("f", $_GET)) {
                 font-weight: bold;
             }
             #list .file td:nth-child(4), #list .file td:nth-child(5) {
-                font-size: small;
+                font-size: 0.8em;
             }
             #list .file:nth-child(odd) {
                 background-color: #eee;
@@ -69,10 +72,10 @@ if (array_key_exists("f", $_GET)) {
         </div>
         <table id="list">
 <?
-$files =$db->query("SELECT path, track, title, artist, album, albumartist FROM songs ORDER BY albumartist ASC, album ASC, track ASC, title ASC");
+$files = $db->query("SELECT id, path, track, title, artist, album, albumartist FROM songs ORDER BY albumartist ASC, album ASC, track ASC, title ASC");
 while ($file = $files->fetchArray()) {
 ?>
-            <tr class="file" data-name="<?=htmlspecialchars($file["artist"])?> - <?=htmlspecialchars($file["title"])?>" data-path="<?=htmlspecialchars($file["path"])?>">
+            <tr class="file" data-name="<?=htmlspecialchars($file["artist"])?> - <?=htmlspecialchars($file["title"])?>" data-id="<?=$file["id"]?>">
                 <td><?=htmlspecialchars($file["track"])?></td>
                 <td><?=htmlspecialchars($file["title"])?></td>
                 <td><?=htmlspecialchars($file["artist"])?></td>
@@ -87,10 +90,14 @@ while ($file = $files->fetchArray()) {
         <script>
             $("#player audio").on("canplay", function(e) {
                 this.play();
+            }).on("ended", function(e) {
+                this.src = "";
+                document.title = "Media";
+                $("#list .file.playing").removeClass("playing");
             });
             $("#list .file").click(function(e) {
                 var player = $("#player audio")[0];
-                player.src = "?f=" + encodeURIComponent($(this).data("path"));
+                player.src = "?id=" + $(this).data("id");
                 player.load();
                 document.title = "\u266a " + $(this).data("name") + " | Media";
                 $("#list .file.playing").removeClass("playing");
