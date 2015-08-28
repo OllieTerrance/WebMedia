@@ -45,8 +45,7 @@ if (array_key_exists("id", $_GET)) {
                 border-spacing: 0;
             }
             #list .file td {
-                padding: 2px 5px 5px;
-                vertical-align: bottom;
+                padding: 0 5px 2px;
                 cursor: default;
             }
             #list .file td:nth-child(1) {
@@ -56,6 +55,7 @@ if (array_key_exists("id", $_GET)) {
                 font-weight: bold;
             }
             #list .file td:nth-child(4), #list .file td:nth-child(5) {
+                padding-top: 1px;
                 font-size: 0.8em;
             }
             #list .file:nth-child(odd) {
@@ -72,7 +72,7 @@ if (array_key_exists("id", $_GET)) {
         </div>
         <table id="list">
 <?
-$files = $db->query("SELECT id, path, track, title, artist, album, albumartist FROM songs ORDER BY albumartist ASC, album ASC, track ASC, title ASC");
+$files = $db->query("SELECT id, path, track, title, artist, album, albumartist FROM songs ORDER BY LOWER(albumartist) ASC, LOWER(album) ASC, track ASC, LOWER(title) ASC");
 while ($file = $files->fetchArray()) {
 ?>
             <tr class="file" data-name="<?=htmlspecialchars($file["artist"])?> - <?=htmlspecialchars($file["title"])?>" data-id="<?=$file["id"]?>">
@@ -88,20 +88,25 @@ while ($file = $files->fetchArray()) {
         </table>
         <script src="lib/js/jquery.min.js"></script>
         <script>
-            $("#player audio").on("canplay", function(e) {
-                this.play();
-            }).on("ended", function(e) {
-                this.src = "";
-                document.title = "Media";
-                $("#list .file.playing").removeClass("playing");
-            });
-            $("#list .file").click(function(e) {
-                var player = $("#player audio")[0];
-                player.src = "?id=" + $(this).data("id");
-                player.load();
-                document.title = "\u266a " + $(this).data("name") + " | Media";
-                $("#list .file.playing").removeClass("playing");
-                $(this).addClass("playing");
+            $(document).ready(function(e) {
+                $("#player audio").on("canplay", function(e) {
+                    this.play();
+                }).on("ended", function(e) {
+                    var $next = $("#list .file.playing").next();
+                    if ($next.length) {
+                        $next.click();
+                    } else {
+                        $("#list .file:first").click();
+                    }
+                });
+                $("#list .file").click(function(e) {
+                    var player = $("#player audio")[0];
+                    player.src = "?id=" + $(this).data("id");
+                    player.load();
+                    document.title = "\u266a " + $(this).data("name") + " | Media";
+                    $("#list .file.playing").removeClass("playing");
+                    $(this).addClass("playing");
+                });
             });
         </script>
     </body>
