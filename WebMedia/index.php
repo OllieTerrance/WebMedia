@@ -86,7 +86,7 @@ while ($file = $files->fetchArray()) {
 }
 ?>
         </table>
-        <script src="lib/js/jquery.min.js"></script>
+        <script src="/.cdn/js/jquery.min.js"></script>
         <script>
             $(document).ready(function(e) {
                 $("#player audio").on("canplay", function(e) {
