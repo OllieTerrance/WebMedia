@@ -15,10 +15,25 @@ if (array_key_exists("id", $_GET)) {
         http_response_code(403);
         die();
     }
+    $fhandle = fopen($path, "rb");
+    if (!$fhandle) {
+        http_response_code(403);
+        die();
+    }
     $finfo = finfo_open();
-    header("Content-type: " . finfo_file($finfo, $path, FILEINFO_MIME));
+    $expires = 60 * 60 * 24 * 365;
+    header("Pragma: public");
+    header("Cache-Control: maxage=" . $expires);
+    header("Expires: " . gmdate("D, d M Y H:i:s", time() + $expires) . " UTC");
+    header("Content-Type: " . finfo_file($finfo, $path, FILEINFO_MIME));
     finfo_close($finfo);
-    die(file_get_contents($path));
+    while (!feof($fhandle)) {
+        echo fread($fhandle, 4096);
+        ob_flush();
+        flush();
+    }
+    fclose($fhandle);
+    die();
 }
 ?><!DOCTYPE html>
 <html>
